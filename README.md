@@ -144,6 +144,28 @@ This will create a production-ready build of your application in the `src-tauri/
 - `pnpm preview`: Preview the built frontend
 - `pnpm check`: Run Svelte type checking
 
+### Docker
+
+To load and run a downloaded image:
+
+```bash
+docker load -i lofi-engine.tar
+cd docker
+cp .env.example .env
+docker compose up -d
+```
+
+To build and run the image yourself:
+
+```bash
+docker build -t lofi-engine:latest .
+cd docker
+cp .env.example .env
+docker compose up -d
+```
+
+The app will be available at `http://localhost:80` by default. Edit `.env` to change the port.
+
 ## Contributing
 
 Contributions are welcome. See the [Contributing Guide](./CONTRIBUTING.md) for details, and check the [issue tracker](https://github.com/meel-hd/lofi-engine/issues) if you want to help, report a bug, or discuss new ideas.
