@@ -1,0 +1,7 @@
+services:
+  lofi-engine:
+    image: lofi-engine:latest
+    container_name: lofi-engine
+    restart: unless-stopped
+    ports:
+      - "${LOFI_ENGINE_PORT:-80}:80"

@@ -1,12 +1,23 @@
 name: "publish"
 on:
-  workflow_dispatch: # Manual trigger
-  push:
-    branches:
-      - 'master'     # Push to master branch trigger
+  workflow_dispatch:
+    inputs:
+      skip_non_docker:
+        description: "Skip the Tauri publish job"
+        type: boolean
+        default: false
+      skip_docker:
+        description: "Skip the Docker publish job"
+        type: boolean
+        default: false
+  # workflow_dispatch: # Manual trigger
+  # push:
+  #   branches:
+  #     - 'master'     # Push to master branch trigger
 
 jobs:
   publish-tauri:
+    if: ${{ !inputs.skip_non_docker }}
     permissions:
       contents: write
     strategy:
@@ -65,3 +76,43 @@ jobs:
           releaseDraft: true
           prerelease: false
           args: ${{ matrix.args }}
+
+  publish-docker:
+    if: ${{ !inputs.skip_docker }}
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: get version
+        id: version
+        run: |
+          VERSION=$(node -p "require('./package.json').version")
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "tag=app-v$VERSION" >> $GITHUB_OUTPUT
+
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
+      - name: install frontend dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: build docker image
+        run: docker build -t lofi-engine:latest .
+
+      - name: save docker image
+        run: docker save lofi-engine:latest -o lofi-engine.tar
+
+      - name: create or update release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.tag }}
+          name: App v${{ steps.version.outputs.version }}
+          body: 'See the assets to download this version and install.'
+          draft: true
+          files: lofi-engine.tar
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
